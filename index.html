@@ -165,12 +165,33 @@
             margin-bottom: 2rem;
             text-align: center;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .food-name-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M25,30 L75,30 C75,30 85,30 85,20 C85,10 75,10 75,10 L25,10 C25,10 15,10 15,20 C15,30 25,30 25,30 Z" stroke="rgba(255,255,255,0.1)" fill="none"/></svg>');
+            background-size: 100px;
+            opacity: 0.1;
         }
 
         .food-name {
             font-size: 1.8rem;
             font-weight: 700;
             margin: 0;
+            position: relative;
+        }
+
+        .food-category {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
         }
 
         .nutrition-card {
@@ -209,13 +230,33 @@
             gap: 0.5rem;
         }
 
-        .daily-percentage {
+        .nutrition-detail {
+            padding: 0.8rem;
+            margin: 0.8rem 0;
+            border-radius: 8px;
+            background: var(--background-color);
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .nutrition-details h6 {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .daily-percentage-section {
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem 0;
             background: rgba(46, 204, 113, 0.1);
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            color: #2c3e50;
+        }
+
+        .daily-percentage {
+            font-weight: 600;
             color: var(--primary-color);
-            font-weight: 500;
         }
 
         .advice-section {
@@ -224,6 +265,17 @@
             background: var(--background-color);
             border-radius: var(--border-radius);
             border-left: 5px solid var(--primary-color);
+        }
+
+        .advice-section h5 {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .advice-content {
+            color: #333;
+            font-size: 0.95rem;
+            line-height: 1.6;
         }
 
         .loading {
@@ -280,9 +332,10 @@
                 <p class="mt-3">Đang phân tích ảnh của bạn...</p>
             </div>
 
-            <div id="results" class="d-none">
+            <div id="results">
                 <div class="food-name-section">
                     <h3 class="food-name" id="foodName">Tên món ăn</h3>
+                    <p class="food-category" id="foodCategory">Chờ phân tích</p>
                 </div>
                 
                 <div class="nutrition-card">
@@ -290,15 +343,15 @@
                         <i class="fas fa-chart-pie me-2"></i>
                         Thông Tin Dinh Dưỡng
                     </h5>
+                    <div class="daily-percentage-section">
+                        Món này cung cấp <span id="caloriesPercentage" class="daily-percentage">---</span> nhu cầu calo cho 1 ngày
+                    </div>
                     <div class="nutrition-item">
                         <div class="nutrition-label">
                             <i class="fas fa-fire me-2"></i>
                             <strong>Calories:</strong>
                         </div>
-                        <div class="d-flex align-items-center gap-3">
-                            <span id="calories" class="nutrition-value">---</span>
-                            <span class="daily-percentage" id="caloriesPercentage">---</span>
-                        </div>
+                        <span id="calories" class="nutrition-value">---</span>
                     </div>
                     <div class="nutrition-item">
                         <div class="nutrition-label">
@@ -323,7 +376,9 @@
                     </div>
                     <div class="nutrition-details mt-4">
                         <h6 class="mb-3">Chi tiết dinh dưỡng khác:</h6>
-                        <div id="nutrients" class="nutrition-list">---</div>
+                        <div id="nutrients" class="nutrition-list">
+                            <div class="nutrition-detail">Chờ phân tích hình ảnh để hiển thị thông tin chi tiết</div>
+                        </div>
                     </div>
                 </div>
 
@@ -332,7 +387,7 @@
                         <i class="fas fa-lightbulb me-2"></i>
                         Lời Khuyên Dinh Dưỡng
                     </h5>
-                    <p id="advice" class="mb-0"></p>
+                    <p id="advice" class="advice-content mb-0">Chờ phân tích hình ảnh để nhận lời khuyên dinh dưỡng từ chuyên gia</p>
                 </div>
             </div>
         </div>
@@ -422,7 +477,7 @@
             }
 
             document.getElementById('loading').style.display = 'block';
-            document.getElementById('results').classList.add('d-none');
+            document.getElementById('results').style.opacity = '0.5';
 
             try {
                 const base64Image = await new Promise((resolve) => {
@@ -480,7 +535,11 @@
                     nutritionData = JSON.parse(jsonText);
 
                     // Cập nhật UI với kết quả
-                    document.getElementById('foodName').textContent = nutritionData.foodName || '---';
+                    document.getElementById('foodName').textContent = nutritionData.foodName || 'Không nhận diện được';
+                    
+                    // Xác định danh mục món ăn (có thể thêm logic tùy thuộc vào ứng dụng)
+                    document.getElementById('foodCategory').textContent = 
+                        nutritionData.category || 'Món ăn phổ thông';
                     
                     // Xử lý calories và tính phần trăm
                     const caloriesText = nutritionData.calories || '---';
@@ -524,15 +583,15 @@
                             .map(([key, value]) => {
                                 const displayKey = nutrientsMapping[key] || key;
                                 return `
-                                    <div class="nutrition-detail p-3 mb-2 bg-light rounded">
+                                    <div class="nutrition-detail">
                                         <strong class="text-capitalize">${displayKey}:</strong> ${value}
                                     </div>
                                 `;
                             })
                             .join('');
-                        document.getElementById('nutrients').innerHTML = nutrientsHtml || '---';
+                        document.getElementById('nutrients').innerHTML = nutrientsHtml || '<div class="nutrition-detail">Không có thông tin chi tiết</div>';
                     } else {
-                        document.getElementById('nutrients').innerHTML = '---';
+                        document.getElementById('nutrients').innerHTML = '<div class="nutrition-detail">Không có thông tin chi tiết</div>';
                     }
 
                     // Xử lý và hiển thị lời khuyên
@@ -544,18 +603,32 @@
                             .replace(/\n\* /g, '<br>• ');
                         document.getElementById('advice').innerHTML = formattedAdvice;
                     } else {
-                        document.getElementById('advice').innerHTML = '---';
+                        document.getElementById('advice').innerHTML = 'Không có lời khuyên dinh dưỡng';
                     }
-
-                    document.getElementById('results').classList.remove('d-none');
+                    
+                    document.getElementById('results').style.opacity = '1';
                 } catch (error) {
                     console.error('Error parsing API response:', error);
                     console.error('JSON text:', result.candidates[0].content.parts[0].text);
                     alert('Có lỗi xảy ra khi phân tích dữ liệu. Vui lòng thử lại.');
+                    
+                    // Reset về trạng thái chờ phân tích
+                    document.getElementById('foodName').textContent = 'Không nhận diện được';
+                    document.getElementById('foodCategory').textContent = 'Không có thông tin';
+                    document.getElementById('caloriesPercentage').textContent = '---';
+                    document.getElementById('calories').textContent = '---';
+                    document.getElementById('protein').textContent = '---';
+                    document.getElementById('sugar').textContent = '---';
+                    document.getElementById('fat').textContent = '---';
+                    document.getElementById('nutrients').innerHTML = '<div class="nutrition-detail">Không có thông tin chi tiết</div>';
+                    document.getElementById('advice').innerHTML = 'Không có lời khuyên dinh dưỡng';
+                    
+                    document.getElementById('results').style.opacity = '1';
                 }
             } catch (error) {
                 console.error('Error:', error);
                 alert('Có lỗi xảy ra khi phân tích ảnh. Vui lòng thử lại.');
+                document.getElementById('results').style.opacity = '1';
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
